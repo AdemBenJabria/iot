@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <title>WaterBnB Pool Access Dashboard</title>
+    <!-- Include CSS libraries -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Custom CSS styles for the dashboard */
+        .user-card {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .user-card .card-header {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .user-card .card-body {
+            background-color: #f8f9fa;
+            position: relative;
+        }
+
+        .user-card .card-body p {
+            margin-bottom: 10px;
+        }
+
+        .user-card .card-body .client-count {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .client-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .client-marker.yellow {
+            background-color: yellow;
+        }
+
+        .client-marker.blue {
+            background-color: blue;
+        }
+
+        .card:hover .client-marker {
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .card:hover .client-marker.yellow {
+            transform: translateY(-50%) scale(1.4);
+            background-color: orange;
+        }
+
+        .card:hover .client-marker.blue {
+            transform: translateY(-50%) scale(1.4);
+            background-color: #007bff;
+        }
+
+        .card-header i {
+            margin-right: 10px;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse-animation {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>WaterBnB Pool Access Dashboard</h1>
+        <div id="userContainer" class="row"></div>
+    </div>
+
+    <!-- Include JavaScript libraries -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <script>
+        const userContainer = document.getElementById("userContainer");
+
+        // Function to create a user card dynamically
+        function createUserCard(userData) {
+            const userCard = document.createElement("div");
+            userCard.classList.add("col-md-6", "user-card");
+            userCard.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-user"></i>${userData.name}
+                    </div>
+                    <div class="card-body">
+                        <p>Location: Latitude ${userData.lat}, Longitude ${userData.lon}</p>
+                        <p>Battery: ${userData.batt}%</p>
+                        <p>Availability: <span class="client-count">0</span> pools</p>
+                        <div class="client-markers"></div>
+                    </div>
+                </div>
+            `;
+            userContainer.appendChild(userCard);
+        }
+
+        // Fetch all users from the server
+        async function fetchUsers() {
+            try {
+                const response = await fetch("/api/users");
+                const users = await response.json();
+                users.forEach(user => {
+                    createUserCard(user);
+                });
+            } catch (error) {
+                console.error("Failed to fetch users:", error);
+            }
+        }
+
+        // Connect to the Socket.io server
+        const socket = io();
+
+        // Listen for client data updates
+        socket.on("clientData", data => {
+            data.forEach(userData => {
+                updateUserData(userData.id, [{ id: userData.id, inPool: userData.inPool }]);
+            });
+        });
+
+        // Fetch users on page load
+        fetchUsers();
+    </script>
+</body>
+</html>
