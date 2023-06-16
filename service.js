@@ -207,11 +207,16 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+const favicon = require('serve-favicon');
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
+
 
 function isClientInPool(clientLat, clientLon, users) {
     const proximityDistance = 0.1; // Proximity distance in kilometers
